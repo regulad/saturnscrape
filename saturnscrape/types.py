@@ -15,6 +15,13 @@ class SizeUrls:
     def from_dict(cls, d: dict):
         return cls(**d)
 
+    def __dict__(self):
+        return {
+            "large": self.large,
+            "medium": self.medium,
+            "small": self.small,
+        }
+
 
 class Image:
     def __eq__(self, other):
@@ -49,6 +56,16 @@ class Image:
         d["metadata"] = d.get("metadata")
         d["is_bitmoji"] = d.get("is_bitmoji", False)
         return cls(**d)
+
+    def __dict__(self):
+        return {
+            "content_type": self.content_type,
+            "id": self.id,
+            "is_bitmoji": self.is_bitmoji,
+            "metadata": self.metadata,
+            "resource_url": self.resource_url,
+            "size_urls": dict(self.size_urls),
+        }
 
 
 class BaseStudent:
@@ -720,6 +737,133 @@ class FullStudent(Student):
         return cls(**d)
 
 
+class Task:
+    __slots__ = (
+        "added_by",
+        "attachments",
+        "course_id",
+        "course_slot",
+        "created_at",
+        "date_completed",
+        "description",
+        "due_date",
+        "due_datetime",
+        "due_seconds",
+        "id",
+        "images",
+        "is_completed",
+        "priority",
+        "public",
+        "shared_with",
+        "title",
+        "updated_at",
+    )
+
+    def __init__(
+            self,
+            *,
+            added_by: list[BaseStudent],  # Unknown
+            attachments: list[Any],  # Unknown
+            course_id: UUID | None,
+            course_slot: bool,
+            created_at: datetime,
+            date_completed: datetime | None,
+            description: str | None,
+            due_date: datetime,
+            due_datetime: datetime,
+            due_seconds: int,
+            id: int,
+            images: list[Image],  # Unknown
+            is_completed: bool,
+            priority: int,
+            public: bool,
+            shared_with: list[BaseStudent],
+            title: str,
+            updated_at: datetime,
+    ):
+        self.added_by: list[BaseStudent] = added_by
+        self.attachments: list[Any] = attachments
+        self.course_id: UUID = course_id
+        self.course_slot: bool = course_slot
+        self.created_at: datetime = created_at
+        self.date_completed: datetime = date_completed
+        self.description: str = description
+        self.due_date: datetime = due_date
+        self.due_datetime: datetime = due_datetime
+        self.due_seconds: int = due_seconds
+        self.id: int = id
+        self.images: list[Image] = images
+        self.is_completed: bool = is_completed
+        self.priority: int = priority
+        self.public: bool = public
+        self.shared_with: list[BaseStudent] = shared_with
+        self.title: str = title
+        self.updated_at: datetime = updated_at
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        d = d.copy()
+        d["added_by"] = [BaseStudent.from_dict(s) for s in d["added_by"]]
+        d["course_id"] = UUID(d["course_id"]) if d["course_id"] else None
+        d["due_date"] = datetime.strptime(d["due_date"], "%Y-%m-%d")
+        d["due_datetime"] = datetime.fromisoformat(d["due_datetime"])
+        d["images"] = [Image.from_dict(i) for i in d["images"]]
+        d["shared_with"] = [BaseStudent.from_dict(s) for s in d["shared_with"]]
+        d["updated_at"] = datetime.fromisoformat(d["updated_at"])
+        d["date_completed"] = datetime.fromisoformat(d["date_completed"]) if d["date_completed"] else None
+        d["created_at"] = datetime.fromisoformat(d["created_at"])
+        return cls(**d)
+
+    def __dict__(self) -> dict:
+        return {
+            "added_by": [dict(s) for s in self.added_by],
+            "attachments": self.attachments,
+            "course_id": str(self.course_id) if self.course_id else None,
+            "course_slot": self.course_slot,
+            "created_at": self.created_at.isoformat(),
+            "date_completed": self.date_completed.isoformat() if self.date_completed else None,
+            "description": self.description,
+            "due_date": self.due_date.isoformat(),
+            "due_datetime": self.due_datetime.isoformat(),
+            "due_seconds": self.due_seconds,
+            "id": self.id,
+            "images": [dict(i) for i in self.images],
+            "is_completed": self.is_completed,
+            "priority": self.priority,
+            "public": self.public,
+            "shared_with": [dict(s) for s in self.shared_with],
+            "title": self.title,
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+
+class Identity:
+    __slots__ = ("first_name", "last_name", "onboarded", "profile_pic", "school_id", "scopes")
+
+    def __init__(
+            self,
+            *,
+            first_name: str,
+            last_name: str,
+            onboarded: bool,
+            profile_pic: Image,
+            school_id: str,
+            scopes: str,
+    ):
+        self.first_name: str = first_name
+        self.last_name: str = last_name
+        self.onboarded: bool = onboarded
+        self.profile_pic: Image = profile_pic
+        self.school_id: str = school_id
+        self.scopes: str = scopes
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        d = d.copy()
+        d["profile_pic"] = Image.from_dict(d["profile_pic"])
+        return cls(**d)
+
+
 __all__ = (
     "SizeUrls",
     "Image",
@@ -738,4 +882,6 @@ __all__ = (
     "ScheduleChange",
     "ScheduleChangeReport",
     "FullStudent",
+    "Task",
+    "Identity",
 )
