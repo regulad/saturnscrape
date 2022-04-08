@@ -421,7 +421,8 @@ class Period:
         d["day_type_id"] = UUID(d["day_type_id"])
         d["period_type_id"] = UUID(d["period_type_id"]) if d.get("period_type_id") else None
         d["id"] = UUID(d["id"])
-        d["instance"] = DefinedCourse.from_dict(d["instance"])
+        if d.get("instance"):
+            d["instance"] = DefinedCourse.from_dict(d["instance"])
         if d.get("start_time"):
             d["start_time"] = datetime.strptime(d["start_time"], "%H:%M:%S")
         if d.get("end_time"):
