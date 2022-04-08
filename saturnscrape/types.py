@@ -542,12 +542,12 @@ class CalendarDay:
             self,
             *,
             date: datetime,
-            is_cancelled: bool,
+            is_canceled: bool,
             raw_block_name: str,
             schedule: BaseSchedule | None,
     ):
         self.date: datetime = date
-        self.is_cancelled: bool = is_cancelled
+        self.is_canceled: bool = is_canceled
         self.raw_block_name: str = raw_block_name
         self.schedule: BaseSchedule | None = schedule
 
