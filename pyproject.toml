@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "saturnscrape"
-version = "0.1.6"
+version = "0.1.7"
 description = "Scrapes information from https://saturn.live, a collaborate school scheduling system."
 authors = ["Parker Wahle <parkeredwardwahle2017@gmail.com>"]
 license = "GPLv3"

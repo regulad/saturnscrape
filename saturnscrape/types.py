@@ -478,6 +478,7 @@ class BellSchedule(BaseSchedule):
             draft: bool,
             emoji: Emoji | None,
             emoji_id: str | None,
+            grid: bool,
             hidden: bool,
             id: UUID,
             lunch_slot: Any | None,  # Unknown
@@ -503,6 +504,7 @@ class BellSchedule(BaseSchedule):
         self.draft: bool = draft
         self.emoji: Emoji | None = emoji
         self.emoji_id: str | None = emoji_id
+        self.grid: bool = grid
         self.hidden: bool = hidden
         self.lunch_slot: Any | None = lunch_slot
         self.lunch_waves: list = lunch_waves
@@ -518,6 +520,7 @@ class BellSchedule(BaseSchedule):
         "draft",
         "emoji",
         "emoji_id",
+        "grid",
         "hidden",
         "lunch_slot",
         "lunch_waves",
