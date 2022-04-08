@@ -423,9 +423,9 @@ class Period:
         d["id"] = UUID(d["id"])
         d["instance"] = DefinedCourse.from_dict(d["instance"])
         if d.get("start_time"):
-            d["start_time"] = datetime.fromisoformat(d["start_time"])  # TODO
+            d["start_time"] = datetime.strptime(d["start_time"], "%H:%M:%S")
         if d.get("end_time"):
-            d["end_time"] = datetime.fromisoformat(d["end_time"])  # TODO
+            d["end_time"] = datetime.strptime(d["start_time"], "%H:%M:%S")
         return cls(**d)
 
 
