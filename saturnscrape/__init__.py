@@ -1,4 +1,4 @@
 from .client import *
 from .types import *
 
-__ver__ = '0.1.4'
+__ver__ = '0.1.5'

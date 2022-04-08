@@ -419,7 +419,7 @@ class Period:
     def from_dict(cls, d: dict):
         d = d.copy()
         d["day_type_id"] = UUID(d["day_type_id"])
-        d["period_type_id"] = UUID(d["period_type_id"])
+        d["period_type_id"] = UUID(d["period_type_id"]) if d.get("period_type_id") else None
         d["id"] = UUID(d["id"])
         d["instance"] = DefinedCourse.from_dict(d["instance"])
         if d.get("start_time"):
