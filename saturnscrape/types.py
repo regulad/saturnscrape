@@ -471,8 +471,8 @@ class BellSchedule(BaseSchedule):
     def __init__(
             self,
             *,
-            author: BaseStudent,
-            author_id: int,
+            author: BaseStudent | None,
+            author_id: int | None,
             created_at: datetime,
             display_name: str,
             draft: bool,
@@ -498,8 +498,8 @@ class BellSchedule(BaseSchedule):
             special=special,
             static=static,
         )
-        self.author: BaseStudent = author
-        self.author_id: int = author_id
+        self.author: BaseStudent | None = author
+        self.author_id: int | None = author_id
         self.created_at: datetime = created_at
         self.draft: bool = draft
         self.emoji: Emoji | None = emoji
@@ -533,7 +533,8 @@ class BellSchedule(BaseSchedule):
     @classmethod
     def from_dict(cls, d: dict):
         d = d.copy()
-        d["author"] = BaseStudent.from_dict(d["author"])
+        if d.get("author"):
+            d["author"] = BaseStudent.from_dict(d["author"])
         d["periods"] = [Period.from_dict(p) for p in d["periods"]]
         d["id"] = UUID(d["id"])
         if d.get("emoji"):
