@@ -425,7 +425,7 @@ class Period:
         if d.get("start_time"):
             d["start_time"] = datetime.strptime(d["start_time"], "%H:%M:%S")
         if d.get("end_time"):
-            d["end_time"] = datetime.strptime(d["start_time"], "%H:%M:%S")
+            d["end_time"] = datetime.strptime(d["end_time"], "%H:%M:%S")
         return cls(**d)
 
 
