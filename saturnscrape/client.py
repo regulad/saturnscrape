@@ -1,4 +1,5 @@
 from enum import Enum
+from logging import Logger, getLogger
 from time import time
 from typing import Literal
 
@@ -6,6 +7,8 @@ from aiohttp import ClientSession, BaseConnector
 from jwt import decode
 
 from .types import *
+
+logger: Logger = getLogger(__name__)
 
 
 class SaturnPlatform(Enum):
@@ -36,7 +39,7 @@ class SaturnLiveClient:
 
     async def on_token_change(self, access_token: str) -> None:
         """For saving the token to a file or database so you can log in later."""
-        pass
+        logger.info(f"Token changed to {access_token}")
 
     async def authorize(self, access_token: str, refresh_token: str) -> tuple[str, Identity, str | None]:
         async with self.session.post(

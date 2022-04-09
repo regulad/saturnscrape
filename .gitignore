@@ -40,3 +40,6 @@ pip-wheel-metadata
 /poetry.toml
 
 poetry/core/*
+
+*.ics
+*.vcf

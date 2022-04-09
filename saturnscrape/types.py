@@ -1,6 +1,9 @@
 from datetime import datetime
+from logging import Logger, getLogger
 from typing import Any
 from uuid import UUID
+
+logger: Logger = getLogger(__name__)
 
 
 class SizeUrls:
@@ -739,6 +742,13 @@ class FullStudent(Student):
         else:
             d["updated_at"] = None
         d["courses"] = [DefinedCourse.from_dict(c) for c in d["courses"]]
+        d["created_at"] = datetime.fromisoformat(d["created_at"])
+        if "profile_picture" in d and d["profile_picture"]:
+            d["profile_picture"] = Image.from_dict(d["profile_picture"])
+        else:
+            d["profile_picture"] = None
+        if d.get("birthday"):
+            d["birthday"] = datetime.strptime(d["birthday"], "%Y-%m-%d")
         return cls(**d)
 
 

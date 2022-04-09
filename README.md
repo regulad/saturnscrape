@@ -21,3 +21,5 @@ async def runner():
 
 run(runner())
 ```
+
+Also provides a simple command line tool for downloading the schedule and members of a school to vCard and vCalendar/iCalendar files.

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "saturnscrape"
-version = "0.1.8"
+version = "1.0.0"
 description = "Scrapes information from https://saturn.live, a collaborate school scheduling system."
 authors = ["Parker Wahle <parkeredwardwahle2017@gmail.com>"]
 license = "GPLv3"
@@ -15,8 +15,17 @@ packages = [
 python = "^3.10"
 aiohttp = "^3.8.1"
 PyJWT = {extras = ["crypto"], version = "^2.3.0"}
+vobject = "^0.9.6"
+ics = "^0.7"
+pytz = "^2022.1"
+tzlocal = "^4.2"
+aiofiles = "^0.8.0"
+arrow = ">=0.11,<0.15"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+saturnscrape = 'saturnscrape:__main__.main'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
