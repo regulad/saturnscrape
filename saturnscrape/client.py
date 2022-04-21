@@ -108,7 +108,7 @@ class SaturnLiveClient:
                 raise resp.raise_for_status()
 
     async def get_emojis(self) -> list[Emoji]:
-        async with self.session.get(f"{API_URL}emojis", **await self.get_headers()) as resp:
+        async with self.session.get(f"{API_URL}emojis", headers=await self.get_headers()) as resp:
             if resp.status == 200:
                 return [Emoji.from_dict(emoji) for emoji in await resp.json()]
             else:
@@ -133,7 +133,7 @@ class SaturnLiveClient:
         async with self.session.get(f"{API_URL}network/reports/schedule_change", params={"school_id": school_id},
                                     headers=await self.get_headers()) as resp:
             if resp.status == 200:
-                return [ScheduleChange.from_dict(change) for change in await resp.json()]
+                return [ScheduleChangeReport.from_dict(change) for change in await resp.json()]
             else:
                 raise resp.raise_for_status()
 
@@ -152,7 +152,7 @@ class SaturnLiveClient:
                 raise resp.raise_for_status()
 
     async def add_task(self, task: Task) -> None:
-        async with self.session.post(f"{API_URL}tasks", json=dict(task), headers=await self.get_headers()) as resp:
+        async with self.session.post(f"{API_URL}tasks", json=task.to_dict(), headers=await self.get_headers()) as resp:
             if resp.status != 200:
                 raise resp.raise_for_status()
 

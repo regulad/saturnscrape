@@ -18,7 +18,7 @@ class SizeUrls:
     def from_dict(cls, d: dict):
         return cls(**d)
 
-    def __dict__(self):
+    def to_dict(self) -> dict:
         return {
             "large": self.large,
             "medium": self.medium,
@@ -60,14 +60,14 @@ class Image:
         d["is_bitmoji"] = d.get("is_bitmoji", False)
         return cls(**d)
 
-    def __dict__(self):
+    def to_dict(self) -> dict:
         return {
             "content_type": self.content_type,
             "id": self.id,
             "is_bitmoji": self.is_bitmoji,
             "metadata": self.metadata,
             "resource_url": self.resource_url,
-            "size_urls": dict(self.size_urls),
+            "size_urls": self.size_urls.to_dict(),
         }
 
 
@@ -87,6 +87,12 @@ class BaseStudent:
     @classmethod
     def from_dict(cls, d: dict):
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
 
 
 class Student(BaseStudent):
@@ -171,6 +177,31 @@ class Student(BaseStudent):
             d["birthday"] = datetime.strptime(d["birthday"], "%Y-%m-%d")
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "ambassador_school": self.ambassador_school,
+            "bio": self.bio,
+            "birthday": self.birthday.strftime("%Y-%m-%d") if self.birthday else None,
+            "created_at": self.created_at.isoformat(),
+            "email": self.email,
+            "first_name": self.first_name,
+            "grade": self.grade,
+            "hidden": self.hidden,
+            "id": self.id,
+            "is_ambassador": self.is_ambassador,
+            "last_name": self.last_name,
+            "name": self.name,
+            "profile_picture": self.profile_picture.to_dict() if self.profile_picture else None,
+            "public": self.public,
+            "url": self.url,
+            "user_cohort": self.user_cohort,
+            "user_instagram": self.user_instagram,
+            "user_snapchat": self.user_snapchat,
+            "user_tiktok": self.user_tiktok,
+            "user_venmo": self.user_venmo,
+            "user_vsco": self.user_vsco,
+        }
+
 
 class Staff:
     def __eq__(self, other):
@@ -189,6 +220,13 @@ class Staff:
     @classmethod
     def from_dict(cls, d: dict):
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "suggested": self.suggested,
+        }
 
 
 class Asset:
@@ -216,6 +254,14 @@ class Asset:
             d["png"] = Image.from_dict(d["png"])
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "gif": self.gif.to_dict() if self.gif else None,
+            "png": self.png.to_dict() if self.png else None,
+            "unicode": self.unicode,
+            "unicode_code": self.unicode_code,
+        }
+
 
 class Emoji:
     def __eq__(self, other):
@@ -224,7 +270,7 @@ class Emoji:
                 and self.position == other.position
         )
 
-    __slots__ = ("category", "name", "position", "resources", "schedule_snapchat_sticker", "tags", "snapchat_sticker")
+    __slots__ = ("category", "name", "position", "resources", "schedule_snapchat_sticker", "tags", "snapchat_sticker", "updated_at")
 
     def __init__(
             self,
@@ -235,7 +281,8 @@ class Emoji:
             resources: Asset,
             schedule_snapchat_sticker: str | None,
             snapchat_sticker: str | None,
-            tags: list[str]
+            tags: list[str],
+            updated_at: datetime,
     ):
         self.category: str = category
         self.name: str = name
@@ -244,13 +291,27 @@ class Emoji:
         self.schedule_snapchat_sticker: str | None = schedule_snapchat_sticker
         self.snapchat_sticker: str | None = snapchat_sticker
         self.tags: list[str] = tags
+        self.updated_at: datetime = updated_at
 
     @classmethod
     def from_dict(cls, d: dict):
         d = d.copy()
         d["resources"] = Asset.from_dict(d["resources"])
+        d["updated_at"] = datetime.fromisoformat(d["updated_at"])
         d["snapchat_sticker"] = d.get("snapchat_sticker") or d.get("schedule_snapchat_sticker")
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "category": self.category,
+            "name": self.name,
+            "position": self.position,
+            "resources": self.resources.to_dict(),
+            "schedule_snapchat_sticker": self.schedule_snapchat_sticker,
+            "snapchat_sticker": self.snapchat_sticker,
+            "tags": self.tags,
+            "updated_at": self.updated_at.isoformat(),
+        }
 
 
 class Course:
@@ -283,6 +344,15 @@ class Course:
         d["emoji"] = Emoji.from_dict(d["emoji"])
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "emoji": self.emoji.to_dict(),
+            "id": self.id,
+            "name": self.name,
+            "school": self.school,
+            "suggested": self.suggested,
+        }
+
 
 class Team:
     __slots__ = ("emoji_id", "gender", "id", "level", "name", "sport", "subscribed")
@@ -312,8 +382,16 @@ class Team:
         d["id"] = UUID(d["id"])
         return cls(**d)
 
-
-# TODO: I don't use tasks, so I can't get any data from it.
+    def to_dict(self) -> dict:
+        return {
+            "emoji_id": self.emoji_id,
+            "gender": self.gender,
+            "id": str(self.id),
+            "level": self.level,
+            "name": self.name,
+            "sport": self.sport,
+            "subscribed": self.subscribed,
+        }
 
 
 # TODO: Sharing status.
@@ -381,6 +459,20 @@ class DefinedCourse:
         d["staff"] = [Staff.from_dict(s) for s in d["staff"]]
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "block": self.block,
+            "class_chat": str(self.class_chat) if self.class_chat else None,
+            "classmates": [s.to_dict() for s in self.classmates],
+            "course": self.course.to_dict(),
+            "id": self.id,
+            "meeting_times": {str(k): [str(m) for m in v] for k, v in self.meeting_times.items()},
+            "nickname": self.nickname,
+            "room": self.room,
+            "school": self.school,
+            "staff": [s.to_dict() for s in self.staff],
+        }
+
 
 class Period:
     def __eq__(self, other):
@@ -432,6 +524,17 @@ class Period:
             d["end_time"] = datetime.strptime(d["end_time"], "%H:%M:%S")
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "day_type_id": str(self.day_type_id),
+            "end_time": self.end_time.strftime("%H:%M:%S") if self.end_time else None,
+            "id": str(self.id),
+            "instance": self.instance.to_dict() if self.instance else None,
+            "name": self.name,
+            "period_type_id": str(self.period_type_id) if self.period_type_id else None,
+            "start_time": self.start_time.strftime("%H:%M:%S") if self.start_time else None,
+        }
+
 
 class BaseSchedule:
     def __eq__(self, other):
@@ -468,6 +571,15 @@ class BaseSchedule:
         d = d.copy()
         d["id"] = UUID(d["id"])
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "display_name": self.display_name,
+            "id": str(self.id),
+            "name": self.name,
+            "special": self.special,
+            "static": self.static,
+        }
 
 
 class BellSchedule(BaseSchedule):
@@ -540,9 +652,34 @@ class BellSchedule(BaseSchedule):
             d["author"] = BaseStudent.from_dict(d["author"])
         d["periods"] = [Period.from_dict(p) for p in d["periods"]]
         d["id"] = UUID(d["id"])
+        d["created_at"] = datetime.fromisoformat(d["created_at"])
+        d["updated_at"] = datetime.fromisoformat(d["updated_at"])
         if d.get("emoji"):
             d["emoji"] = Emoji.from_dict(d["emoji"])
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "author": self.author.to_dict() if self.author else None,
+            "author_id": self.author_id,
+            "created_at": self.created_at.isoformat(),
+            "display_name": self.display_name,
+            "draft": self.draft,
+            "emoji": self.emoji.to_dict() if self.emoji else None,
+            "emoji_id": self.emoji_id,
+            "grid": self.grid,
+            "hidden": self.hidden,
+            "id": str(self.id),
+            "lunch_slot": self.lunch_slot,
+            "lunch_waves": self.lunch_waves,
+            "name": self.name,
+            "order": self.order,
+            "periods": [p.to_dict() for p in self.periods],
+            "school_id": self.school_id,
+            "special": self.special,
+            "static": self.static,
+            "updated_at": self.updated_at.isoformat(),
+        }
 
 
 class CalendarDay:
@@ -566,6 +703,14 @@ class CalendarDay:
         if d.get("schedule"):
             d["schedule"] = BaseSchedule.from_dict(d["schedule"])
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "date": self.date.strftime("%Y-%m-%d"),
+            "is_canceled": self.is_canceled,
+            "raw_block_name": self.raw_block_name,
+            "schedule": self.schedule.to_dict() if self.schedule else None,
+        }
 
 
 class ScheduleChange:
@@ -602,6 +747,16 @@ class ScheduleChange:
         d["original_schedule_id"] = UUID(d["original_schedule_id"])
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "count": self.count,
+            "desired_schedule": self.desired_schedule,
+            "desired_schedule_id": str(self.desired_schedule_id),
+            "original_schedule": self.original_schedule,
+            "original_schedule_id": str(self.original_schedule_id),
+            "user_id": self.user_id,
+        }
+
 
 class ScheduleChangeReport:
     def __eq__(self, other):
@@ -621,7 +776,7 @@ class ScheduleChangeReport:
             report_count: int,
             school_name: str,
             school_title: str,
-            school_state: str,
+            state: str,
             status: str,
             target_date: datetime,
             timezone: str,  # We can (possibly) do better.
@@ -636,7 +791,7 @@ class ScheduleChangeReport:
         self.report_count: int = report_count
         self.school_name: str = school_name
         self.school_title: str = school_title
-        self.school_state: str = school_state
+        self.state: str = state
         self.status: str = status
         self.target_date: datetime = target_date
         self.timezone: str = timezone
@@ -652,7 +807,7 @@ class ScheduleChangeReport:
         "report_count",
         "school_name",
         "school_title",
-        "school_state",
+        "state",
         "status",
         "target_date",
         "timezone",
@@ -667,6 +822,24 @@ class ScheduleChangeReport:
         d["ambassadors"] = [BaseStudent.from_dict(a) for a in d["ambassadors"]]
         d["changes"] = [ScheduleChange.from_dict(c) for c in d["changes"]]
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "ambassadors": [a.to_dict() for a in self.ambassadors],
+            "changes": [c.to_dict() for c in self.changes],
+            "district_school_count": self.district_school_count,
+            "district_schools": self.district_schools,
+            "key": self.key,
+            "report_count": self.report_count,
+            "school_name": self.school_name,
+            "school_title": self.school_title,
+            "state": self.state,
+            "status": self.status,
+            "target_date": self.target_date.strftime("%Y-%m-%d"),
+            "timezone": self.timezone,
+            "upcoming_days": self.upcoming_days,
+            "user_count": self.user_count,
+        }
 
 
 class FullStudent(Student):
@@ -751,6 +924,50 @@ class FullStudent(Student):
             d["birthday"] = datetime.strptime(d["birthday"], "%Y-%m-%d")
         return cls(**d)
 
+    def to_dict(self) -> dict:
+        return {
+            "ambassador_school": self.ambassador_school,
+            "bio": self.bio,
+            "birthday": self.birthday.strftime("%Y-%m-%d") if self.birthday else None,
+            "created_at": self.created_at.isoformat(),
+            "email": self.email,
+            "first_name": self.first_name,
+            "grade": self.grade,
+            "hidden": self.hidden,
+            "id": self.id,
+            "is_ambassador": self.is_ambassador,
+            "last_name": self.last_name,
+            "name": self.name,
+            "profile_picture": self.profile_picture.to_dict() if self.profile_picture else None,
+            "public": self.public,
+            "url": self.url,
+            "user_cohort": self.user_cohort,
+            "user_instagram": self.user_instagram,
+            "user_snapchat": self.user_snapchat,
+            "user_tiktok": self.user_tiktok,
+            "user_venmo": self.user_venmo,
+            "user_vsco": self.user_vsco,
+
+            "updated_at": self.updated_at.isoformat(),
+            "profile_pic_url": self.profile_pic_url,
+            "gender": self.gender,
+            "gender_preference": self.gender_preference,
+            "onboarded": self.onboarded,
+            "phone_number": self.phone_number,
+            "phone_validated": self.phone_validated,
+            "tags": self.tags,
+            "granted_scopes": self.granted_scopes,
+            "school_id": self.school_id,
+            "referred_by": self.referred_by,
+            "ambassador_school_id": self.ambassador_school_id,
+            "hashid": self.hashid,
+            "school_title": self.school_title,
+            "school": self.school,
+            "waitlist_school": self.waitlist_school,
+            "courses": [c.to_dict() for c in self.courses],
+            "permissions": self.permissions,
+        }
+
 
 class Task:
     __slots__ = (
@@ -829,9 +1046,9 @@ class Task:
         d["created_at"] = datetime.fromisoformat(d["created_at"])
         return cls(**d)
 
-    def __dict__(self) -> dict:
+    def to_dict(self) -> dict:
         return {
-            "added_by": [dict(s) for s in self.added_by],
+            "added_by": [s.to_dict() for s in self.added_by],
             "attachments": self.attachments,
             "course_id": str(self.course_id) if self.course_id else None,
             "course_slot": self.course_slot,
@@ -842,11 +1059,11 @@ class Task:
             "due_datetime": self.due_datetime.isoformat(),
             "due_seconds": self.due_seconds,
             "id": self.id,
-            "images": [dict(i) for i in self.images],
+            "images": [i.to_dict() for i in self.images],
             "is_completed": self.is_completed,
             "priority": self.priority,
             "public": self.public,
-            "shared_with": [dict(s) for s in self.shared_with],
+            "shared_with": [s.to_dict() for s in self.shared_with],
             "title": self.title,
             "updated_at": self.updated_at.isoformat(),
         }
@@ -877,6 +1094,16 @@ class Identity:
         d = d.copy()
         d["profile_pic"] = Image.from_dict(d["profile_pic"])
         return cls(**d)
+
+    def to_dict(self) -> dict:
+        return {
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "onboarded": self.onboarded,
+            "profile_pic": self.profile_pic.to_dict(),
+            "school_id": self.school_id,
+            "scopes": self.scopes,
+        }
 
 
 __all__ = (
