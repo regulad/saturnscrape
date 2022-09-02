@@ -117,6 +117,10 @@ class Student(BaseStudent):
         "user_venmo",
         "user_vsco",
         "updated_at",
+        # Added sometime between April 2022 and June 2022
+        "user_education",
+        "user_city",
+        "user_workplace",
     )
 
     def __init__(
@@ -143,6 +147,9 @@ class Student(BaseStudent):
             user_tiktok: str | None,
             user_venmo: str | None,
             user_vsco: str | None,
+            user_education: str | None,
+            user_city: str | None,
+            user_workplace: str | None,
     ):
         super().__init__(id=id, name=name)
         self.ambassador_school: str | None = ambassador_school
@@ -164,6 +171,9 @@ class Student(BaseStudent):
         self.user_tiktok: str | None = user_tiktok
         self.user_venmo: str | None = user_venmo
         self.user_vsco: str | None = user_vsco
+        self.user_workplace: str | None = user_workplace
+        self.user_city: str | None = user_city
+        self.user_education: str | None = user_education
 
     @classmethod
     def from_dict(cls, d: dict):
@@ -270,7 +280,8 @@ class Emoji:
                 and self.position == other.position
         )
 
-    __slots__ = ("category", "name", "position", "resources", "schedule_snapchat_sticker", "tags", "snapchat_sticker", "updated_at")
+    __slots__ = (
+    "category", "name", "position", "resources", "schedule_snapchat_sticker", "tags", "snapchat_sticker", "updated_at")
 
     def __init__(
             self,
@@ -605,6 +616,7 @@ class BellSchedule(BaseSchedule):
             special: bool,
             static: bool,
             updated_at: datetime,
+            day_type_id: str | None,
     ):
         super().__init__(
             display_name=display_name,
@@ -627,6 +639,7 @@ class BellSchedule(BaseSchedule):
         self.periods: list[Period] = periods
         self.school_id: str = school_id
         self.updated_at: datetime = updated_at
+        self.day_type_id: str | None = day_type_id
 
     __slots__ = BaseSchedule.__slots__ + (
         "author",
@@ -636,6 +649,7 @@ class BellSchedule(BaseSchedule):
         "emoji",
         "emoji_id",
         "grid",
+        "day_type_id",
         "hidden",
         "lunch_slot",
         "lunch_waves",

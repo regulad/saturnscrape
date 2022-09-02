@@ -1,7 +1,7 @@
 from enum import Enum
 from logging import Logger, getLogger
 from time import time
-from typing import Literal
+from typing import Literal, Any, Coroutine
 
 from aiohttp import ClientSession, BaseConnector
 from jwt import decode
@@ -36,6 +36,12 @@ class SaturnLiveClient:
         self.user_agent: str | None = user_agent
 
         self.identity: Identity | None = None
+
+    async def __aenter__(self) -> "SaturnLiveClient":
+        return self
+
+    def __aexit__(self, exc_type, exc_val, exc_tb) -> Coroutine[Any, Any, None]:
+        return self.close()
 
     async def on_token_change(self, access_token: str) -> None:
         """For saving the token to a file or database so you can log in later."""
