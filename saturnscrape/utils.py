@@ -131,20 +131,19 @@ def make_contact(student: Student) -> Component:
         instagram.value = student.user_vsco
         instagram.type_param = ['vsco']
 
-    if isinstance(student, FullStudent):
-        # Phone
-        if hasattr(student, "phone_number") and student.phone_number:
-            card.add('tel')
-            card.tel.value = student.phone_number
-            card.tel.type_param = ['CELL', 'VOICE']
+    # Phone
+    if hasattr(student, "phone_number") and student.phone_number:
+        card.add('tel')
+        card.tel.value = student.phone_number
+        card.tel.type_param = ['CELL', 'VOICE']
 
-        # Birthday
-        if hasattr(student, "birthday") and student.birthday:
-            card.add('bday').value = arrow_to_iso(Arrow.fromdatetime(student.birthday))
+    # Birthday
+    if hasattr(student, "birthday") and student.birthday:
+        card.add('bday').value = arrow_to_iso(Arrow.fromdatetime(student.birthday))
 
-        # Gender
-        if hasattr(student, "gender") and student.gender:
-            card.add("GENDER").value = student.gender
+    # Gender
+    if hasattr(student, "gender") and student.gender:
+        card.add("GENDER").value = student.gender
 
     return card
 
