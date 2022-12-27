@@ -1,408 +1,165 @@
 from datetime import datetime
 from logging import Logger, getLogger
-from typing import Any
+from typing import Any, TypedDict, TYPE_CHECKING, Type
 from uuid import UUID
 
 logger: Logger = getLogger(__name__)
 
+if TYPE_CHECKING:
+    OLD_CLASS_INHERIT: Type = TypedDict
+else:
+    OLD_CLASS_INHERIT: Type = dict
 
-class SizeUrls:
-    __slots__ = ("large", "medium", "small")
 
-    def __init__(self, *, large: str, medium: str, small: str):
-        self.large: str = large
-        self.medium: str = medium
-        self.small: str = small
+class _OldClass(OLD_CLASS_INHERIT):
+    # patch between old code and new code. Very hacky, but I don't want to write things.
+    def __init__(self, *args, **kwargs: Any) -> None:
+        super(_OldClass, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
     @classmethod
-    def from_dict(cls, d: dict):
-        return cls(**d)
+    def from_dict(cls, data: dict) -> "_OldClass":
+        copied = data.copy()
+
+        for key, value in copied.copy().items():
+            if "id" in key:
+                try:
+                    copied[key] = UUID(value)
+                except Exception:
+                    continue
+            elif "date" in key or "day" in key:
+                try:
+                    copied[key] = datetime.strptime(value, "%Y-%m-%d")
+                except Exception:
+                    continue
+            elif "at" in key:
+                try:
+                    copied[key] = datetime.fromisoformat(value)
+                except Exception:
+                    continue
+
+        return cls(**copied)
 
     def to_dict(self) -> dict:
-        return {
-            "large": self.large,
-            "medium": self.medium,
-            "small": self.small,
-        }
+        copied: dict = self.copy()
+
+        for key, value in copied.copy().items():
+            if isinstance(value, UUID):
+                copied[key] = str(value)
+            elif isinstance(value, datetime):
+                if "date" in key or "day" in key:
+                    copied[key] = value.strftime("%Y-%m-%d")
+                else:
+                    copied[key] = value.isoformat()
+
+        return copied
 
 
-class Image:
+class SizeUrls(_OldClass):
+    large: str
+    medium: str
+    small: str
+
+
+class Image(_OldClass):
     def __eq__(self, other):
         return (
                 isinstance(other, self.__class__)
                 and self.id == other.id
         )
 
-    __slots__ = ("content_type", "id", "is_bitmoji", "metadata", "resource_url", "size_urls")
-
-    def __init__(
-            self,
-            *,
-            content_type: str,
-            id: str,
-            is_bitmoji: bool,
-            metadata: dict[str, int] | None,
-            resource_url: str,
-            size_urls: SizeUrls
-    ):
-        self.content_type: str = content_type
-        self.id: str = id
-        self.is_bitmoji: bool = is_bitmoji
-        self.metadata: dict[str, int] | None = metadata
-        self.resource_url: str = resource_url
-        self.size_urls: SizeUrls = size_urls
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["size_urls"] = SizeUrls.from_dict(d["size_urls"])
-        d["metadata"] = d.get("metadata")
-        d["is_bitmoji"] = d.get("is_bitmoji", False)
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "content_type": self.content_type,
-            "id": self.id,
-            "is_bitmoji": self.is_bitmoji,
-            "metadata": self.metadata,
-            "resource_url": self.resource_url,
-            "size_urls": self.size_urls.to_dict(),
-        }
+    content_type: str
+    id: str
+    is_bitmoji: bool
+    metadata: dict[str, int] | None
+    resource_url: str
+    size_urls: SizeUrls
 
 
-class BaseStudent:
+class BaseStudent(_OldClass):
     def __eq__(self, other):
         return (
                 isinstance(other, self.__class__)
                 and self.id == other.id
         )
 
-    __slots__ = ("id", "name")
-
-    def __init__(self, *, id: int, name: str):
-        self.id: int = id
-        self.name: str = name
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-        }
+    id: str
+    name: str
 
 
 class Student(BaseStudent):
-    __slots__ = BaseStudent.__slots__ + (
-        "ambassador_school",
-        "bio",
-        "birthday",
-        "created_at",
-        "email",
-        "first_name",
-        "grade",
-        "hidden",
-        "is_ambassador",
-        "last_name",
-        "profile_picture",
-        "public",
-        "url",
-        "user_cohort",
-        "user_instagram",
-        "user_snapchat",
-        "user_tiktok",
-        "user_venmo",
-        "user_vsco",
-        "updated_at",
-        # Added sometime between April 2022 and June 2022
-        "user_education",
-        "user_city",
-        "user_workplace",
-    )
-
-    def __init__(
-            self,
-            *,
-            ambassador_school: str | None,
-            bio: str | None,
-            birthday: datetime,
-            created_at: datetime,
-            email: str | None,
-            first_name: str,
-            grade: int,
-            hidden: Any | None,  # Unknown
-            id: int,
-            is_ambassador: bool,
-            last_name: str,
-            name: str,
-            profile_picture: Image | None,
-            public: bool,
-            url: str | None,
-            user_cohort: str | None,
-            user_instagram: str | None,
-            user_snapchat: str | None,
-            user_tiktok: str | None,
-            user_venmo: str | None,
-            user_vsco: str | None,
-            user_education: str | None,
-            user_city: str | None,
-            user_workplace: str | None,
-    ):
-        super().__init__(id=id, name=name)
-        self.ambassador_school: str | None = ambassador_school
-        self.bio: str | None = bio
-        self.birthday: datetime = birthday
-        self.created_at: datetime = created_at
-        self.email: str | None = email
-        self.first_name: str = first_name
-        self.grade: int = grade
-        self.hidden: Any | None = hidden
-        self.is_ambassador: bool = is_ambassador
-        self.last_name: str = last_name
-        self.profile_picture: Image | None = profile_picture
-        self.public: bool = public
-        self.url: str | None = url
-        self.user_cohort: str | None = user_cohort
-        self.user_instagram: str | None = user_instagram
-        self.user_snapchat: str | None = user_snapchat
-        self.user_tiktok: str | None = user_tiktok
-        self.user_venmo: str | None = user_venmo
-        self.user_vsco: str | None = user_vsco
-        self.user_workplace: str | None = user_workplace
-        self.user_city: str | None = user_city
-        self.user_education: str | None = user_education
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["created_at"] = datetime.fromisoformat(d["created_at"])
-        if "profile_picture" in d and d["profile_picture"]:
-            d["profile_picture"] = Image.from_dict(d["profile_picture"])
-        else:
-            d["profile_picture"] = None
-        if d.get("birthday"):
-            d["birthday"] = datetime.strptime(d["birthday"], "%Y-%m-%d")
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "ambassador_school": self.ambassador_school,
-            "bio": self.bio,
-            "birthday": self.birthday.strftime("%Y-%m-%d") if self.birthday else None,
-            "created_at": self.created_at.isoformat(),
-            "email": self.email,
-            "first_name": self.first_name,
-            "grade": self.grade,
-            "hidden": self.hidden,
-            "id": self.id,
-            "is_ambassador": self.is_ambassador,
-            "last_name": self.last_name,
-            "name": self.name,
-            "profile_picture": self.profile_picture.to_dict() if self.profile_picture else None,
-            "public": self.public,
-            "url": self.url,
-            "user_cohort": self.user_cohort,
-            "user_instagram": self.user_instagram,
-            "user_snapchat": self.user_snapchat,
-            "user_tiktok": self.user_tiktok,
-            "user_venmo": self.user_venmo,
-            "user_vsco": self.user_vsco,
-        }
+    ambassador_school: str | None
+    bio: str | None
+    birthday: datetime | None
+    created_at: datetime
+    email: str | None
+    first_name: str
+    grade: int
+    hidden: Any | None
+    is_ambassador: bool
+    last_name: str
+    profile_picture: Image | None
+    public: bool
+    url: str | None
+    user_cohort: str | None
+    user_instagram: str | None
+    user_snapchat: str | None
+    user_tiktok: str | None
+    user_venmo: str | None
+    user_vsco: str | None
+    user_education: str | None
+    user_city: str | None
+    user_workplace: str | None
+    schedule_type_response: str | None
+    lite_to_live_completed: bool | None
+    gameball_id: str | None
+    description: str | None
+    affinity: str | None
+    updated_at: datetime | None
+    tags: str | None
+    school_id: str | None
 
 
-class Staff:
-    def __eq__(self, other):
-        return (
-                isinstance(other, self.__class__)
-                and self.id == other.id
-        )
-
-    __slots__ = ("id", "name", "suggested")
-
-    def __init__(self, *, id: int, name: str, suggested: bool):
-        self.id: int = id
-        self.name: str = name
-        self.suggested: bool = suggested
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "suggested": self.suggested,
-        }
+class Staff(_OldClass):
+    id: int
+    name: str
+    suggested: bool
 
 
-class Asset:
-    __slots__ = ("gif", "png", "unicode", "unicode_code")
-
-    def __init__(
-            self,
-            *,
-            gif: Image | None,
-            png: Image | None,
-            unicode: str,
-            unicode_code: str
-    ):
-        self.gif: Image | None = gif
-        self.png: Image | None = png
-        self.unicode: str = unicode
-        self.unicode_code: str = unicode_code
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        if d.get("gif"):
-            d["gif"] = Image.from_dict(d["gif"])
-        if d.get("png"):
-            d["png"] = Image.from_dict(d["png"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "gif": self.gif.to_dict() if self.gif else None,
-            "png": self.png.to_dict() if self.png else None,
-            "unicode": self.unicode,
-            "unicode_code": self.unicode_code,
-        }
+class Asset(_OldClass):
+    gif: Image | None
+    png: Image | None
+    unicode: str
+    unicode_code: str
 
 
-class Emoji:
-    def __eq__(self, other):
-        return (
-                isinstance(other, self.__class__)
-                and self.position == other.position
-        )
-
-    __slots__ = (
-    "category", "name", "position", "resources", "schedule_snapchat_sticker", "tags", "snapchat_sticker", "updated_at")
-
-    def __init__(
-            self,
-            *,
-            category: str,
-            name: str,
-            position: int,
-            resources: Asset,
-            schedule_snapchat_sticker: str | None,
-            snapchat_sticker: str | None,
-            tags: list[str],
-            updated_at: datetime,
-    ):
-        self.category: str = category
-        self.name: str = name
-        self.position: int = position
-        self.resources: Asset = resources
-        self.schedule_snapchat_sticker: str | None = schedule_snapchat_sticker
-        self.snapchat_sticker: str | None = snapchat_sticker
-        self.tags: list[str] = tags
-        self.updated_at: datetime = updated_at
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["resources"] = Asset.from_dict(d["resources"])
-        d["updated_at"] = datetime.fromisoformat(d["updated_at"])
-        d["snapchat_sticker"] = d.get("snapchat_sticker") or d.get("schedule_snapchat_sticker")
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "category": self.category,
-            "name": self.name,
-            "position": self.position,
-            "resources": self.resources.to_dict(),
-            "schedule_snapchat_sticker": self.schedule_snapchat_sticker,
-            "snapchat_sticker": self.snapchat_sticker,
-            "tags": self.tags,
-            "updated_at": self.updated_at.isoformat(),
-        }
+class Emoji(_OldClass):
+    category: str
+    name: str
+    position: int
+    resources: Asset
+    schedule_snapchat_sticker: str | None
+    snapchat_sticker: str | None
+    tags: list[str]
+    updated_at: datetime
 
 
-class Course:
-    def __eq__(self, other):
-        return (
-                isinstance(other, self.__class__)
-                and self.id == other.id
-        )
-
-    __slots__ = ("emoji", "id", "name", "school", "suggested")
-
-    def __init__(
-            self,
-            *,
-            emoji: Emoji,
-            id: int,
-            name: str,
-            school: str,
-            suggested: bool
-    ):
-        self.emoji: Emoji = emoji
-        self.id: int = id
-        self.name: str = name
-        self.school: str = school
-        self.suggested: bool = suggested
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["emoji"] = Emoji.from_dict(d["emoji"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "emoji": self.emoji.to_dict(),
-            "id": self.id,
-            "name": self.name,
-            "school": self.school,
-            "suggested": self.suggested,
-        }
+class Course(_OldClass):
+    emoji: Emoji
+    id: int
+    name: str
+    school: str
+    suggested: bool
 
 
-class Team:
-    __slots__ = ("emoji_id", "gender", "id", "level", "name", "sport", "subscribed")
-
-    def __init__(
-            self,
-            *,
-            emoji_id: str,
-            gender: str,
-            id: UUID,
-            level: str,
-            name: str,
-            sport: str,
-            subscribed: bool,
-    ):
-        self.emoji_id: str = emoji_id
-        self.gender: str = gender
-        self.id: UUID = id
-        self.level: str = level
-        self.name: str = name
-        self.sport: str = sport
-        self.subscribed: bool = subscribed
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["id"] = UUID(d["id"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "emoji_id": self.emoji_id,
-            "gender": self.gender,
-            "id": str(self.id),
-            "level": self.level,
-            "name": self.name,
-            "sport": self.sport,
-            "subscribed": self.subscribed,
-        }
+class Team(_OldClass):
+    emoji_id: str
+    gender: str
+    id: UUID
+    level: str
+    name: str
+    sport: str
+    subscribed: bool
 
 
 # TODO: Sharing status.
@@ -414,710 +171,138 @@ class Team:
 # TODO: Chats
 
 
-class DefinedCourse:
-    def __eq__(self, other):
-        return (
-                isinstance(other, self.__class__)
-                and self.id == other.id
-        )
-
-    __slots__ = (
-        "block",
-        "class_chat",
-        "classmates",
-        "course",
-        "id",
-        "meeting_times",
-        "nickname",
-        "room",
-        "school",
-        "staff"
-    )
-
-    def __init__(
-            self,
-            *,
-            block: Any | None,  # Unknown
-            class_chat: UUID | None,
-            classmates: list[Student],
-            course: Course,
-            id: int,
-            meeting_times: dict[UUID, list[UUID]],
-            nickname: str | None,
-            room: str,
-            school: str,
-            staff: list[Staff],
-    ):
-        self.block: Any | None = block
-        self.class_chat: UUID | None = class_chat
-        self.classmates: list[Student] = classmates
-        self.course: Course = course
-        self.id: int = id
-        self.meeting_times: dict[UUID, list[UUID]] = meeting_times
-        self.nickname: str | None = nickname
-        self.room: str = room
-        self.school: str = school
-        self.staff: list[Staff] = staff
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        if d.get("class_chat"):
-            d["class_chat"] = UUID(d["class_chat"])
-        d["classmates"] = [Student.from_dict(s) for s in d.get("classmates", [])]
-        d["course"] = Course.from_dict(d["course"])
-        d["meeting_times"] = {UUID(k): [UUID(m) for m in v] for k, v in d["meeting_times"].items()}
-        d["staff"] = [Staff.from_dict(s) for s in d["staff"]]
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "block": self.block,
-            "class_chat": str(self.class_chat) if self.class_chat else None,
-            "classmates": [s.to_dict() for s in self.classmates],
-            "course": self.course.to_dict(),
-            "id": self.id,
-            "meeting_times": {str(k): [str(m) for m in v] for k, v in self.meeting_times.items()},
-            "nickname": self.nickname,
-            "room": self.room,
-            "school": self.school,
-            "staff": [s.to_dict() for s in self.staff],
-        }
+class DefinedCourse(_OldClass):
+    block: Any | None  # Unknown
+    class_chat: UUID | None
+    classmates: list[Student]
+    course: Course
+    id: int
+    meeting_times: dict[UUID, list[UUID]]
+    nickname: str | None
+    room: str
+    school: str
+    staff: list[Staff]
 
 
-class Period:
-    def __eq__(self, other):
-        return (
-                isinstance(other, self.__class__)
-                and self.id == other.id
-        )
-
-    __slots__ = (
-        "day_type_id",
-        "end_time",
-        "id",
-        "instance",
-        "name",
-        "period_type_id",
-        "start_time"
-    )
-
-    def __init__(
-            self,
-            *,
-            day_type_id: UUID,
-            end_time: datetime,
-            id: UUID,
-            instance: DefinedCourse,
-            name: str,
-            period_type_id: UUID,
-            start_time: datetime,
-    ):
-        self.day_type_id: UUID = day_type_id
-        self.end_time: datetime = end_time
-        self.id: UUID = id
-        self.instance: DefinedCourse = instance
-        self.name: str = name
-        self.period_type_id: UUID = period_type_id
-        self.start_time: datetime = start_time
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["day_type_id"] = UUID(d["day_type_id"])
-        d["period_type_id"] = UUID(d["period_type_id"]) if d.get("period_type_id") else None
-        d["id"] = UUID(d["id"])
-        if d.get("instance"):
-            d["instance"] = DefinedCourse.from_dict(d["instance"])
-        if d.get("start_time"):
-            d["start_time"] = datetime.strptime(d["start_time"], "%H:%M:%S")
-        if d.get("end_time"):
-            d["end_time"] = datetime.strptime(d["end_time"], "%H:%M:%S")
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "day_type_id": str(self.day_type_id),
-            "end_time": self.end_time.strftime("%H:%M:%S") if self.end_time else None,
-            "id": str(self.id),
-            "instance": self.instance.to_dict() if self.instance else None,
-            "name": self.name,
-            "period_type_id": str(self.period_type_id) if self.period_type_id else None,
-            "start_time": self.start_time.strftime("%H:%M:%S") if self.start_time else None,
-        }
+class Period(_OldClass):
+    day_type_id: UUID
+    end_time: datetime
+    id: UUID
+    instance: DefinedCourse
+    name: str
+    period_type_id: UUID
+    start_time: datetime
 
 
-class BaseSchedule:
-    def __eq__(self, other):
-        return (
-                isinstance(other, self.__class__)
-                and self.id == other.id
-        )
-
-    __slots__ = (
-        "display_name",
-        "id",
-        "name",
-        "special",
-        "static",
-    )
-
-    def __init__(
-            self,
-            *,
-            display_name: str,
-            id: UUID,
-            name: str,
-            special: bool,
-            static: bool,
-    ):
-        self.display_name: str = display_name
-        self.id: UUID = id
-        self.name: str = name
-        self.special: bool = special
-        self.static: bool = static
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["id"] = UUID(d["id"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "display_name": self.display_name,
-            "id": str(self.id),
-            "name": self.name,
-            "special": self.special,
-            "static": self.static,
-        }
+class BaseSchedule(_OldClass):
+    display_name: str
+    id: UUID
+    name: str
+    special: bool
+    static: bool
 
 
 class BellSchedule(BaseSchedule):
-    def __init__(
-            self,
-            *,
-            author: BaseStudent | None,
-            author_id: int | None,
-            created_at: datetime,
-            display_name: str,
-            draft: bool,
-            emoji: Emoji | None,
-            emoji_id: str | None,
-            grid: bool,
-            hidden: bool,
-            id: UUID,
-            lunch_slot: Any | None,  # Unknown
-            lunch_waves: list,  # Unknown
-            name: str,
-            order: int,
-            periods: list[Period],
-            school_id: str,
-            special: bool,
-            static: bool,
-            updated_at: datetime,
-            day_type_id: str | None,
-    ):
-        super().__init__(
-            display_name=display_name,
-            id=id,
-            name=name,
-            special=special,
-            static=static,
-        )
-        self.author: BaseStudent | None = author
-        self.author_id: int | None = author_id
-        self.created_at: datetime = created_at
-        self.draft: bool = draft
-        self.emoji: Emoji | None = emoji
-        self.emoji_id: str | None = emoji_id
-        self.grid: bool = grid
-        self.hidden: bool = hidden
-        self.lunch_slot: Any | None = lunch_slot
-        self.lunch_waves: list = lunch_waves
-        self.order: int = order
-        self.periods: list[Period] = periods
-        self.school_id: str = school_id
-        self.updated_at: datetime = updated_at
-        self.day_type_id: str | None = day_type_id
-
-    __slots__ = BaseSchedule.__slots__ + (
-        "author",
-        "author_id",
-        "created_at",
-        "draft",
-        "emoji",
-        "emoji_id",
-        "grid",
-        "day_type_id",
-        "hidden",
-        "lunch_slot",
-        "lunch_waves",
-        "order",
-        "periods",
-        "school_id",
-        "updated_at",
-    )
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        if d.get("author"):
-            d["author"] = BaseStudent.from_dict(d["author"])
-        d["periods"] = [Period.from_dict(p) for p in d["periods"]]
-        d["id"] = UUID(d["id"])
-        d["created_at"] = datetime.fromisoformat(d["created_at"])
-        d["updated_at"] = datetime.fromisoformat(d["updated_at"])
-        if d.get("emoji"):
-            d["emoji"] = Emoji.from_dict(d["emoji"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "author": self.author.to_dict() if self.author else None,
-            "author_id": self.author_id,
-            "created_at": self.created_at.isoformat(),
-            "display_name": self.display_name,
-            "draft": self.draft,
-            "emoji": self.emoji.to_dict() if self.emoji else None,
-            "emoji_id": self.emoji_id,
-            "grid": self.grid,
-            "hidden": self.hidden,
-            "id": str(self.id),
-            "lunch_slot": self.lunch_slot,
-            "lunch_waves": self.lunch_waves,
-            "name": self.name,
-            "order": self.order,
-            "periods": [p.to_dict() for p in self.periods],
-            "school_id": self.school_id,
-            "special": self.special,
-            "static": self.static,
-            "updated_at": self.updated_at.isoformat(),
-        }
+    author: BaseStudent | None
+    author_id: int | None
+    draft: bool
+    emoji: Emoji | None
+    emoji_id: str | None
+    grid: bool
+    hidden: bool
+    lunch_slot: Any | None  # Unknown
+    lunch_waves: list  # Unknown
+    order: int
+    periods: list[Period]
+    school_id: str
+    updated_at: datetime
 
 
-class CalendarDay:
-    def __init__(
-            self,
-            *,
-            date: datetime,
-            is_canceled: bool,
-            raw_block_name: str,
-            schedule: BaseSchedule | None,
-    ):
-        self.date: datetime = date
-        self.is_canceled: bool = is_canceled
-        self.raw_block_name: str = raw_block_name
-        self.schedule: BaseSchedule | None = schedule
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["date"] = datetime.strptime(d["date"], "%Y-%m-%d")
-        if d.get("schedule"):
-            d["schedule"] = BaseSchedule.from_dict(d["schedule"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "date": self.date.strftime("%Y-%m-%d"),
-            "is_canceled": self.is_canceled,
-            "raw_block_name": self.raw_block_name,
-            "schedule": self.schedule.to_dict() if self.schedule else None,
-        }
+class CalendarDay(_OldClass):
+    date: datetime
+    is_canceled: bool
+    raw_block_name: str
+    schedule: BaseSchedule | None
 
 
-class ScheduleChange:
-    def __init__(
-            self,
-            *,
-            count: int,
-            desired_schedule: str,
-            desired_schedule_id: UUID,
-            original_schedule: str,
-            original_schedule_id: UUID,
-            user_id: int,
-    ):
-        self.count: int = count
-        self.desired_schedule: str = desired_schedule
-        self.desired_schedule_id: UUID = desired_schedule_id
-        self.original_schedule: str = original_schedule
-        self.original_schedule_id: UUID = original_schedule_id
-        self.user_id: int = user_id
-
-    __slots__ = (
-        "count",
-        "desired_schedule",
-        "desired_schedule_id",
-        "original_schedule",
-        "original_schedule_id",
-        "user_id",
-    )
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["desired_schedule_id"] = UUID(d["desired_schedule_id"])
-        d["original_schedule_id"] = UUID(d["original_schedule_id"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "count": self.count,
-            "desired_schedule": self.desired_schedule,
-            "desired_schedule_id": str(self.desired_schedule_id),
-            "original_schedule": self.original_schedule,
-            "original_schedule_id": str(self.original_schedule_id),
-            "user_id": self.user_id,
-        }
+class ScheduleChange(_OldClass):
+    count: int
+    desired_schedule: str
+    desired_schedule_id: UUID
+    original_schedule: str
+    original_schedule_id: UUID
+    user_id: int
 
 
-class ScheduleChangeReport:
+class ScheduleChangeReport(_OldClass):
     def __eq__(self, other):
         return (
                 isinstance(other, self.__class__)
                 and self.key == other.key
         )
 
-    def __init__(
-            self,
-            *,
-            ambassadors: list[BaseStudent],
-            changes: list[ScheduleChange],
-            district_school_count: int,
-            district_schools: list[str],
-            key: int,
-            report_count: int,
-            school_name: str,
-            school_title: str,
-            state: str,
-            status: str,
-            target_date: datetime,
-            timezone: str,  # We can (possibly) do better.
-            upcoming_days: int,
-            user_count: int,
-    ):
-        self.ambassadors: list[BaseStudent] = ambassadors
-        self.changes: list[ScheduleChange] = changes
-        self.district_school_count: int = district_school_count
-        self.district_schools: list[str] = district_schools
-        self.key: int = key
-        self.report_count: int = report_count
-        self.school_name: str = school_name
-        self.school_title: str = school_title
-        self.state: str = state
-        self.status: str = status
-        self.target_date: datetime = target_date
-        self.timezone: str = timezone
-        self.upcoming_days: int = upcoming_days
-        self.user_count: int = user_count
-
-    __slots__ = (
-        "ambassadors",
-        "changes",
-        "district_school_count",
-        "district_schools",
-        "key",
-        "report_count",
-        "school_name",
-        "school_title",
-        "state",
-        "status",
-        "target_date",
-        "timezone",
-        "upcoming_days",
-        "user_count",
-    )
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["target_date"] = datetime.strptime(d["target_date"], "%Y-%m-%d")
-        d["ambassadors"] = [BaseStudent.from_dict(a) for a in d["ambassadors"]]
-        d["changes"] = [ScheduleChange.from_dict(c) for c in d["changes"]]
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "ambassadors": [a.to_dict() for a in self.ambassadors],
-            "changes": [c.to_dict() for c in self.changes],
-            "district_school_count": self.district_school_count,
-            "district_schools": self.district_schools,
-            "key": self.key,
-            "report_count": self.report_count,
-            "school_name": self.school_name,
-            "school_title": self.school_title,
-            "state": self.state,
-            "status": self.status,
-            "target_date": self.target_date.strftime("%Y-%m-%d"),
-            "timezone": self.timezone,
-            "upcoming_days": self.upcoming_days,
-            "user_count": self.user_count,
-        }
+    ambassadors: list[BaseStudent]
+    changes: list[ScheduleChange]
+    district_school_count: int
+    district_schools: list[str]
+    key: int
+    report_count: int
+    school_name: str
+    school_title: str
+    state: str
+    status: str
+    target_date: datetime
+    timezone: str  # We can (possibly) do better.
+    upcoming_days: int
+    user_count: int
 
 
 class FullStudent(Student):
-    __slots__ = Student.__slots__ + (
-        "updated_at",
-        "profile_pic_url",
-        "gender",
-        "gender_preference",
-        "onboarded",
-        "phone_number",
-        "phone_validated",
-        "tags",
-        "granted_scopes",
-        "school_id",
-        "referred_by",
-        "ambassador_school_id",
-        "hashid",
-        "school_title",
-        "school",
-        "waitlist_school",
-        "courses",
-        "permissions",
-    )
-
-    def __init__(
-            self,
-            *,
-            updated_at: datetime | None,
-            profile_pic_url: str,
-            gender: Any | None,  # Unknown
-            gender_preference: Any | None,  # Unknown
-            onboarded: bool,
-            phone_number: str,
-            phone_validated: bool,
-            tags: list[Any],  # Unknown
-            granted_scopes: list[Any],  # Unknown
-            school_id: str,
-            referred_by: Any | None,  # Unknown
-            ambassador_school_id: Any | None,  # Unknown
-            hashid: str,
-            school_title: str,
-            school: str,
-            waitlist_school: Any | None,  # Unknown
-            courses: list[DefinedCourse],
-            permissions: dict[str, bool],
-            **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.updated_at: datetime = updated_at
-        self.profile_pic_url: str = profile_pic_url
-        self.gender: Any | None = gender
-        self.gender_preference: Any | None = gender_preference
-        self.onboarded: bool = onboarded
-        self.phone_number: str = phone_number
-        self.phone_validated: bool = phone_validated
-        self.tags: list[Any] = tags
-        self.granted_scopes: list[Any] = granted_scopes
-        self.school_id: str = school_id
-        self.referred_by: Any | None = referred_by
-        self.ambassador_school_id: Any | None = ambassador_school_id
-        self.hashid: str = hashid
-        self.school_title: str = school_title
-        self.school: str = school
-        self.waitlist_school: Any | None = waitlist_school
-        self.courses: list[DefinedCourse] = courses
-        self.permissions: dict[str, bool] = permissions
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        if d.get("updated_at"):
-            d["updated_at"] = datetime.fromisoformat(d["updated_at"])
-        else:
-            d["updated_at"] = None
-        d["courses"] = [DefinedCourse.from_dict(c) for c in d["courses"]]
-        d["created_at"] = datetime.fromisoformat(d["created_at"])
-        if "profile_picture" in d and d["profile_picture"]:
-            d["profile_picture"] = Image.from_dict(d["profile_picture"])
-        else:
-            d["profile_picture"] = None
-        if d.get("birthday"):
-            d["birthday"] = datetime.strptime(d["birthday"], "%Y-%m-%d")
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "ambassador_school": self.ambassador_school,
-            "bio": self.bio,
-            "birthday": self.birthday.strftime("%Y-%m-%d") if self.birthday else None,
-            "created_at": self.created_at.isoformat(),
-            "email": self.email,
-            "first_name": self.first_name,
-            "grade": self.grade,
-            "hidden": self.hidden,
-            "id": self.id,
-            "is_ambassador": self.is_ambassador,
-            "last_name": self.last_name,
-            "name": self.name,
-            "profile_picture": self.profile_picture.to_dict() if self.profile_picture else None,
-            "public": self.public,
-            "url": self.url,
-            "user_cohort": self.user_cohort,
-            "user_instagram": self.user_instagram,
-            "user_snapchat": self.user_snapchat,
-            "user_tiktok": self.user_tiktok,
-            "user_venmo": self.user_venmo,
-            "user_vsco": self.user_vsco,
-
-            "updated_at": self.updated_at.isoformat(),
-            "profile_pic_url": self.profile_pic_url,
-            "gender": self.gender,
-            "gender_preference": self.gender_preference,
-            "onboarded": self.onboarded,
-            "phone_number": self.phone_number,
-            "phone_validated": self.phone_validated,
-            "tags": self.tags,
-            "granted_scopes": self.granted_scopes,
-            "school_id": self.school_id,
-            "referred_by": self.referred_by,
-            "ambassador_school_id": self.ambassador_school_id,
-            "hashid": self.hashid,
-            "school_title": self.school_title,
-            "school": self.school,
-            "waitlist_school": self.waitlist_school,
-            "courses": [c.to_dict() for c in self.courses],
-            "permissions": self.permissions,
-        }
+    profile_pic_url: str
+    gender: Any | None  # Unknown
+    gender_preference: Any | None  # Unknown
+    onboarded: bool
+    phone_number: str
+    phone_validated: bool
+    granted_scopes: list[Any]  # Unknown
+    referred_by: Any | None  # Unknown
+    ambassador_school_id: Any | None  # Unknown
+    hashid: str
+    school_title: str
+    school: str
+    waitlist_school: Any | None  # Unknown
+    courses: list[DefinedCourse]
+    permissions: dict[str, bool]
 
 
-class Task:
-    __slots__ = (
-        "added_by",
-        "attachments",
-        "course_id",
-        "course_slot",
-        "created_at",
-        "date_completed",
-        "description",
-        "due_date",
-        "due_datetime",
-        "due_seconds",
-        "id",
-        "images",
-        "is_completed",
-        "priority",
-        "public",
-        "shared_with",
-        "title",
-        "updated_at",
-    )
-
-    def __init__(
-            self,
-            *,
-            added_by: list[BaseStudent],  # Unknown
-            attachments: list[Any],  # Unknown
-            course_id: UUID | None,
-            course_slot: bool,
-            created_at: datetime,
-            date_completed: datetime | None,
-            description: str | None,
-            due_date: datetime,
-            due_datetime: datetime,
-            due_seconds: int,
-            id: int,
-            images: list[Image],  # Unknown
-            is_completed: bool,
-            priority: int,
-            public: bool,
-            shared_with: list[BaseStudent],
-            title: str,
-            updated_at: datetime,
-    ):
-        self.added_by: list[BaseStudent] = added_by
-        self.attachments: list[Any] = attachments
-        self.course_id: UUID = course_id
-        self.course_slot: bool = course_slot
-        self.created_at: datetime = created_at
-        self.date_completed: datetime = date_completed
-        self.description: str = description
-        self.due_date: datetime = due_date
-        self.due_datetime: datetime = due_datetime
-        self.due_seconds: int = due_seconds
-        self.id: int = id
-        self.images: list[Image] = images
-        self.is_completed: bool = is_completed
-        self.priority: int = priority
-        self.public: bool = public
-        self.shared_with: list[BaseStudent] = shared_with
-        self.title: str = title
-        self.updated_at: datetime = updated_at
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["added_by"] = [BaseStudent.from_dict(s) for s in d["added_by"]]
-        d["course_id"] = UUID(d["course_id"]) if d["course_id"] else None
-        d["due_date"] = datetime.strptime(d["due_date"], "%Y-%m-%d")
-        d["due_datetime"] = datetime.fromisoformat(d["due_datetime"])
-        d["images"] = [Image.from_dict(i) for i in d["images"]]
-        d["shared_with"] = [BaseStudent.from_dict(s) for s in d["shared_with"]]
-        d["updated_at"] = datetime.fromisoformat(d["updated_at"])
-        d["date_completed"] = datetime.fromisoformat(d["date_completed"]) if d["date_completed"] else None
-        d["created_at"] = datetime.fromisoformat(d["created_at"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "added_by": [s.to_dict() for s in self.added_by],
-            "attachments": self.attachments,
-            "course_id": str(self.course_id) if self.course_id else None,
-            "course_slot": self.course_slot,
-            "created_at": self.created_at.isoformat(),
-            "date_completed": self.date_completed.isoformat() if self.date_completed else None,
-            "description": self.description,
-            "due_date": self.due_date.isoformat(),
-            "due_datetime": self.due_datetime.isoformat(),
-            "due_seconds": self.due_seconds,
-            "id": self.id,
-            "images": [i.to_dict() for i in self.images],
-            "is_completed": self.is_completed,
-            "priority": self.priority,
-            "public": self.public,
-            "shared_with": [s.to_dict() for s in self.shared_with],
-            "title": self.title,
-            "updated_at": self.updated_at.isoformat(),
-        }
+class Task(_OldClass):
+    added_by: list[BaseStudent]  # Unknown
+    attachments: list[Any]  # Unknown
+    course_id: UUID | None
+    course_slot: bool
+    created_at: datetime
+    date_completed: datetime | None
+    description: str | None
+    due_date: datetime
+    due_datetime: datetime
+    due_seconds: int
+    id: int
+    images: list[Image]  # Unknown
+    is_completed: bool
+    priority: int
+    public: bool
+    shared_with: list[BaseStudent]
+    title: str
+    updated_at: datetime
 
 
 class Identity:
-    __slots__ = ("first_name", "last_name", "onboarded", "profile_pic", "school_id", "scopes")
-
-    def __init__(
-            self,
-            *,
-            first_name: str,
-            last_name: str,
-            onboarded: bool,
-            profile_pic: Image,
-            school_id: str,
-            scopes: str,
-    ):
-        self.first_name: str = first_name
-        self.last_name: str = last_name
-        self.onboarded: bool = onboarded
-        self.profile_pic: Image = profile_pic
-        self.school_id: str = school_id
-        self.scopes: str = scopes
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        d = d.copy()
-        d["profile_pic"] = Image.from_dict(d["profile_pic"])
-        return cls(**d)
-
-    def to_dict(self) -> dict:
-        return {
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "onboarded": self.onboarded,
-            "profile_pic": self.profile_pic.to_dict(),
-            "school_id": self.school_id,
-            "scopes": self.scopes,
-        }
+    first_name: str
+    last_name: str
+    onboarded: bool
+    profile_pic: Image
+    school_id: str
+    scopes: str
 
 
 __all__ = (

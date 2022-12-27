@@ -4,7 +4,7 @@ from logging import Logger, getLogger
 
 from arrow import Arrow
 from ics import *
-from ics.parse import ContentLine
+from ics.grammar.parse import ContentLine
 from ics.utils import arrow_to_iso
 from pytz import UTC
 from tzlocal import get_localzone
