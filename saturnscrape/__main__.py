@@ -18,8 +18,6 @@ logger: Logger = getLogger(__name__)
 async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars: list[str | int], me: bool, school: str,
                      contacts: list[str | int], dump: bool) -> None:
     async with SaturnLiveClient(saturn_token, saturn_refresh_token) as client:
-        os.mkdir("out")
-
         loop: AbstractEventLoop = get_running_loop()
         my_student: FullStudent = cast(FullStudent, await client.get_student("me"))
         school_id: str = school or my_student.school_id
