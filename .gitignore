@@ -44,3 +44,4 @@ poetry/core/*
 *.ics
 *.vcf
 *.json
+out/*

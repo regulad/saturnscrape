@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser, Namespace
 from asyncio import run, AbstractEventLoop, get_running_loop, gather, Semaphore
 from json import dumps
@@ -17,6 +18,8 @@ logger: Logger = getLogger(__name__)
 async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars: list[str | int], me: bool, school: str,
                      contacts: list[str | int], dump: bool) -> None:
     async with SaturnLiveClient(saturn_token, saturn_refresh_token) as client:
+        os.mkdir("out")
+
         loop: AbstractEventLoop = get_running_loop()
         my_student: FullStudent = cast(FullStudent, await client.get_student("me"))
         school_id: str = school or my_student.school_id
@@ -32,7 +35,7 @@ async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars:
         async def write_calendar(calendar: int) -> None:
             async with calendar_semaphore:
                 ics_calendar: Calendar = await utils.make_calendar(client, school_id, calendar)
-                async with aioopen(f"{calendar}.ics", mode="w", loop=loop) as f:
+                async with aioopen(f"out/{calendar}.ics", mode="w", loop=loop) as f:
                     await f.write(str(ics_calendar))
                 print(f"Wrote calendar of {calendar}")
 
@@ -45,7 +48,7 @@ async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars:
             async with contact_semaphore:
                 student: Student = await client.get_student(contact)
                 vcard: Component = utils.make_contact(student)
-                async with aioopen(f"{student.id}.vcf", mode="w", loop=loop) as f:
+                async with aioopen(f"out/{student.id}.vcf", mode="w", loop=loop) as f:
                     await f.write(vcard.serialize())
                 print(f"Wrote contact of {student.id} {student.name}")
 
@@ -62,7 +65,7 @@ async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars:
                         print(f"Scraped {student.id} {student.name}")
 
             await gather(
-                *[loop.create_task(write_student(student)) for student in await client.get_students(school_id)])
+                *[write_student(student) for student in await client.get_students(school_id)])
 
             schedules: list[dict] = [schedule.to_dict() for schedule in
                                      await client.get_schedules(my_student.id, include_chats=False)]
@@ -90,7 +93,7 @@ async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars:
                                             await client.get_schedule_changes(school_id)]
             print("Scraped schedule changes")
 
-            async with aioopen(f"{school_id}.json", mode="w", loop=loop) as fp:
+            async with aioopen(f"out/{school_id}.json", mode="w", loop=loop) as fp:
                 await fp.write(
                     dumps(
                         {
@@ -108,6 +111,16 @@ async def async_main(saturn_token: str, saturn_refresh_token: str, *, calendars:
                         indent=4
                     )
                 )
+
+            async def write_contact_student(student: Student) -> None:
+                async with contact_semaphore:
+                    vcard: Component = utils.make_contact(student)
+                    async with aioopen(f"out/{student.id}.vcf", mode="w", loop=loop) as f:
+                        await f.write(vcard.serialize())
+                    print(f"Wrote contact of {student.id} {student.name}")
+
+            await gather(*[write_contact_student(student) for student in students])
+            await gather(*[write_calendar(int(student.id)) for student in students])
 
         contact_tasks: list[Task] = [loop.create_task(write_contact(contact)) for contact in contacts]
         await gather(*contact_tasks)

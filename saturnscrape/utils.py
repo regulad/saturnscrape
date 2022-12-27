@@ -26,9 +26,6 @@ async def make_calendar(client: SaturnLiveClient, school_id: str, student_id: in
 
     school_name: str = school_id.replace('-', ' ').title()
 
-    if isinstance(student, FullStudent):
-        school_name = student.school_title
-
     loop: AbstractEventLoop = get_event_loop()
     calendar: Calendar = await loop.run_in_executor(
         None,
@@ -94,55 +91,59 @@ def make_contact(student: Student) -> Component:
     card.add('n').value = vcard.Name(family=student.last_name, given=student.first_name)
     card.add("fn").value = student.name
 
+    # Profile Picture
+    if hasattr(student, "profile_picture") and student.profile_picture:
+        card.add("PHOTO").value = student.profile_picture["size_urls"].get("large") or student.profile_picture["size_urls"].get("medium") or student.profile_picture["size_urls"].get("small")
+
     # Email
-    if student.email:
+    if hasattr(student, "email") and student.email:
         card.add('email')
         card.email.value = student.email
         card.email.type_param = ['WORK', 'INTERNET']
 
     # Instragram
-    if student.user_instagram:
+    if hasattr(student, "instagram") and student.instagram:
         instagram = card.add("IMPP")
         instagram.value = student.user_instagram
         instagram.type_param = ['INSTAGRAM']
 
     # Snapchat
-    if student.user_snapchat:
+    if hasattr(student, "snapchat") and student.snapchat:
         instagram = card.add("IMPP")
         instagram.value = student.user_snapchat
         instagram.type_param = ['SNAPCHAT']
 
     # Tiktok
-    if student.user_tiktok:
+    if hasattr(student, "tiktok") and student.tiktok:
         instagram = card.add("IMPP")
         instagram.value = student.user_tiktok
         instagram.type_param = ['TIKTOK']
 
     # Venmo
-    if student.user_venmo:
+    if hasattr(student, "venmo") and student.venmo:
         instagram = card.add("IMPP")
         instagram.value = student.user_venmo
         instagram.type_param = ['VENMOP']
 
     # Vsco
-    if student.user_vsco:
+    if hasattr(student, "vsco") and student.vsco:
         instagram = card.add("IMPP")
         instagram.value = student.user_vsco
         instagram.type_param = ['vsco']
 
     if isinstance(student, FullStudent):
         # Phone
-        if student.phone_number:
+        if hasattr(student, "phone_number") and student.phone_number:
             card.add('tel')
             card.tel.value = student.phone_number
             card.tel.type_param = ['CELL', 'VOICE']
 
         # Birthday
-        if student.birthday:
+        if hasattr(student, "birthday") and student.birthday:
             card.add('bday').value = arrow_to_iso(Arrow.fromdatetime(student.birthday))
 
         # Gender
-        if student.gender:
+        if hasattr(student, "gender") and student.gender:
             card.add("GENDER").value = student.gender
 
     return card

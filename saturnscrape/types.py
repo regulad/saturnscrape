@@ -37,6 +37,8 @@ class _OldClass(OLD_CLASS_INHERIT):
                     copied[key] = datetime.fromisoformat(value)
                 except Exception:
                     continue
+            elif isinstance(value, dict):
+                copied[key] = value  # weird doesn't help
 
         return cls(**copied)
 
