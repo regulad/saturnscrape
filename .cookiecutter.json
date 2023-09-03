@@ -1,0 +1,16 @@
+{
+  "_template": "gh:regulad/cookiecutter-neopy",
+  "author": "Parker Wahle",
+  "copyright_year": "2023",
+  "description": "Scrape schedule data from https://saturn.live to use in your own applications",
+  "development_status": "Development Status :: 3 - Alpha",
+  "email": "regulad@regulad.xyz",
+  "environ_prefix": "SATURNSCRAPE_",
+  "friendly_name": "SaturnScrape",
+  "github_user": "regulad",
+  "license": "GPL-3.0",
+  "line_length": "120",
+  "package_name": "saturnscrape",
+  "project_name": "saturnscrape",
+  "version": "2.0.0"
+}

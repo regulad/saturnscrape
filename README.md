@@ -1,25 +1,71 @@
-# saturnscrape
+# SaturnScrape
 
-Scrapes information from https://saturn.live, a collaborate school scheduling system.
+[![PyPI](https://img.shields.io/pypi/v/saturnscrape.svg)][pypi status]
+[![Status](https://img.shields.io/pypi/status/saturnscrape.svg)][pypi status]
+[![Python Version](https://img.shields.io/pypi/pyversions/saturnscrape)][pypi status]
+[![License](https://img.shields.io/pypi/l/saturnscrape)][license]
 
-Currently, this Python package only aims to support the scheduling and members of a school.
+[![Read the documentation at https://saturnscrape.readthedocs.io/](https://img.shields.io/readthedocs/saturnscrape/latest.svg?label=Read%20the%20Docs)][read the docs]
+[![Tests](https://github.com/regulad/saturnscrape/workflows/Tests/badge.svg)][tests]
+[![Codecov](https://codecov.io/gh/regulad/saturnscrape/branch/main/graph/badge.svg)][codecov]
 
-## Example
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
+[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
 
-```python
-from asyncio import run
-from typing import cast
+[pypi status]: https://pypi.org/project/saturnscrape/
+[read the docs]: https://saturnscrape.readthedocs.io/
+[tests]: https://github.com/regulad/saturnscrape/actions?workflow=Tests
+[codecov]: https://app.codecov.io/gh/regulad/saturnscrape
+[pre-commit]: https://github.com/pre-commit/pre-commit
+[black]: https://github.com/psf/black
 
-from saturnscrape import *
+## Features
 
+- TODO
 
-async def runner():
-    client = SaturnLiveClient("jwt", "refresh token")
-    print(cast(FullStudent, await client.get_student("me")).phone_number)
-    await client.close()
-    
+## Requirements
 
-run(runner())
+- TODO
+
+## Installation
+
+You can install _SaturnScrape_ via [pip] from [PyPI]:
+
+```console
+$ pip install saturnscrape
 ```
 
-Also provides a simple command line tool for downloading the schedule and members of a school to vCard and vCalendar/iCalendar files.
+## Usage
+
+Please see the [Command-line Reference] for details.
+
+## Contributing
+
+Contributions are very welcome.
+To learn more, see the [Contributor Guide].
+
+## License
+
+Distributed under the terms of the [GPL 3.0 license][license],
+_SaturnScrape_ is free and open source software.
+
+## Issues
+
+If you encounter any problems,
+please [file an issue] along with a detailed description.
+
+## Credits
+
+This project was generated from [@regulad]'s [neopy] template.
+
+[@regulad]: https://github.com/regulad
+[pypi]: https://pypi.org/
+[neopy]: https://github.com/regulad/cookiecutter-neopy
+[file an issue]: https://github.com/regulad/saturnscrape/issues
+[pip]: https://pip.pypa.io/
+
+<!-- github-only -->
+
+[license]: https://github.com/regulad/saturnscrape/blob/main/LICENSE
+[contributor guide]: https://github.com/regulad/saturnscrape/blob/main/CONTRIBUTING.md
+[command-line reference]: https://saturnscrape.readthedocs.io/en/latest/usage.html
